@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Price Prediction</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        canvas {
+            max-width: 80%;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Stock Price Predictions (AMZN, IBM, MSFT)</h1>
+    <canvas id="stockChart"></canvas>
+    
+    <h2>Stock Forecast Graph</h2>
+    <img id="stockGraph" src="http://127.0.0.1:5000/plot" alt="Stock Forecast Graph" width="800">
+
+    <script>
+        async function fetchStockData() {
+            const response = await fetch('http://127.0.0.1:5000/predict');
+            const data = await response.json();
+            
+            const labels = Array.from({length: data["AMZN"].actual.length}, (_, i) => i);
+            const stockSymbols = ["AMZN", "IBM", "MSFT"];
+            const colors = ["blue", "green", "red"];
+            const datasets = [];
+
+            stockSymbols.forEach((stock, index) => {
+                datasets.push({
+                    label: `Actual ${stock}`,
+                    data: data[stock].actual,
+                    borderColor: colors[index],
+                    fill: false,
+                    borderWidth: 1,
+                    borderDash: [5, 5]
+                });
+
+                datasets.push({
+                    label: `Predicted ${stock}`,
+                    data: new Array(data[stock].actual.length - data[stock].predicted.length).fill(null).concat(data[stock].predicted),
+                    borderColor: colors[index],
+                    fill: false,
+                    borderWidth: 2
+                });
+            });
+
+            const ctx = document.getElementById('stockChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { title: { display: true, text: "Time" } },
+                        y: { title: { display: true, text: "Stock Price" } }
+                    }
+                }
+            });
+        }
+
+        fetchStockData();
+    </script>
+
+</body>
+</html>
+
